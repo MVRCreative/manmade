@@ -1,0 +1,254 @@
+@layer theme, base, clerk, components, utilities; /* Ensure Clerk is compatible with Tailwind CSS v4 */
+
+@import 'tailwindcss';
+
+/*
+ * Design-system CSS variables.
+ *
+ * Mirror the tokens declared in `src/lib/design-tokens.ts`. The `--ds-*`
+ * names form the contract between TS and CSS — keep them in sync. The
+ * `@theme inline` block wires the same tokens into Tailwind v4 so that
+ * `bg-ds-primary` and friends are valid utilities.
+ *
+ * Theming: `:root` holds the light (Mode A friendly) palette; the dark
+ * overrides live under `[data-theme="dark"]` on `<html>`. A pre-paint
+ * inline script in `src/app/layout.tsx` sets that attribute before the
+ * first paint so there is no theme flash.
+ */
+:root {
+  color-scheme: light;
+
+  /* Colors — light */
+  --ds-color-background: oklch(0.99 0 0);
+  --ds-color-foreground: oklch(0.16 0 0);
+  --ds-color-muted: oklch(0.96 0 0);
+  --ds-color-muted-foreground: oklch(0.48 0 0);
+  --ds-color-border: oklch(0.91 0 0);
+  --ds-color-card: oklch(1 0 0);
+  --ds-color-card-foreground: oklch(0.16 0 0);
+  --ds-color-primary: oklch(0.76 0.115 232);
+  --ds-color-primary-foreground: oklch(0.16 0 0);
+  --ds-color-secondary: oklch(0.94 0.005 230);
+  --ds-color-secondary-foreground: oklch(0.22 0.04 230);
+  --ds-color-accent: oklch(0.76 0.115 232);
+  --ds-color-accent-foreground: oklch(0.16 0 0);
+  --ds-color-success: oklch(0.72 0.18 152);
+  --ds-color-warning: oklch(0.82 0.16 86);
+  --ds-color-destructive: oklch(0.62 0.22 27);
+  --ds-color-destructive-foreground: oklch(0.99 0 0);
+
+  /* Spacing */
+  --ds-space-2xs: 0.25rem;
+  --ds-space-xs: 0.5rem;
+  --ds-space-sm: 0.75rem;
+  --ds-space-md: 1rem;
+  --ds-space-lg: 1.5rem;
+  --ds-space-xl: 2rem;
+  --ds-space-2xl: 3rem;
+  --ds-space-3xl: 4rem;
+  --ds-space-4xl: 6rem;
+  --ds-space-5xl: 8rem;
+
+  /* Radii */
+  --ds-radius-none: 0;
+  --ds-radius-sm: 0.25rem;
+  --ds-radius-md: 0.5rem;
+  --ds-radius-lg: 0.75rem;
+  --ds-radius-xl: 1rem;
+  --ds-radius-2xl: 1.5rem;
+  --ds-radius-full: 9999px;
+
+  /* Shadows */
+  --ds-shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  --ds-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+  --ds-shadow-md: 0 4px 12px -2px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.04);
+  --ds-shadow-lg: 0 12px 28px -6px rgb(0 0 0 / 0.12), 0 6px 10px -6px rgb(0 0 0 / 0.08);
+  --ds-shadow-xl: 0 24px 48px -12px rgb(0 0 0 / 0.18);
+  --ds-shadow-ring: 0 0 0 3px oklch(0.76 0.115 232 / 0.35);
+
+  /* Typography */
+  --ds-font-sans:
+    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --ds-font-display: var(--ds-font-sans);
+  --ds-font-mono:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Colors — dark (Mode A) */
+  --ds-color-background: oklch(0.13 0 0);
+  --ds-color-foreground: oklch(0.98 0 0);
+  --ds-color-muted: oklch(0.18 0 0);
+  --ds-color-muted-foreground: oklch(0.62 0 0);
+  --ds-color-border: oklch(0.22 0 0);
+  --ds-color-card: oklch(0.16 0 0);
+  --ds-color-card-foreground: oklch(0.98 0 0);
+  --ds-color-secondary: oklch(0.2 0 0);
+  --ds-color-secondary-foreground: oklch(0.92 0 0);
+  --ds-color-success: oklch(0.74 0.18 152);
+  --ds-color-warning: oklch(0.84 0.16 86);
+  --ds-color-destructive: oklch(0.66 0.22 27);
+}
+
+@theme inline {
+  --color-ds-background: var(--ds-color-background);
+  --color-ds-foreground: var(--ds-color-foreground);
+  --color-ds-muted: var(--ds-color-muted);
+  --color-ds-muted-foreground: var(--ds-color-muted-foreground);
+  --color-ds-border: var(--ds-color-border);
+  --color-ds-card: var(--ds-color-card);
+  --color-ds-card-foreground: var(--ds-color-card-foreground);
+  --color-ds-primary: var(--ds-color-primary);
+  --color-ds-primary-foreground: var(--ds-color-primary-foreground);
+  --color-ds-secondary: var(--ds-color-secondary);
+  --color-ds-secondary-foreground: var(--ds-color-secondary-foreground);
+  --color-ds-accent: var(--ds-color-accent);
+  --color-ds-accent-foreground: var(--ds-color-accent-foreground);
+  --color-ds-success: var(--ds-color-success);
+  --color-ds-warning: var(--ds-color-warning);
+  --color-ds-destructive: var(--ds-color-destructive);
+  --color-ds-destructive-foreground: var(--ds-color-destructive-foreground);
+
+  --radius-ds-sm: var(--ds-radius-sm);
+  --radius-ds-md: var(--ds-radius-md);
+  --radius-ds-lg: var(--ds-radius-lg);
+  --radius-ds-xl: var(--ds-radius-xl);
+  --radius-ds-2xl: var(--ds-radius-2xl);
+  --radius-ds-full: var(--ds-radius-full);
+
+  --shadow-ds-xs: var(--ds-shadow-xs);
+  --shadow-ds-sm: var(--ds-shadow-sm);
+  --shadow-ds-md: var(--ds-shadow-md);
+  --shadow-ds-lg: var(--ds-shadow-lg);
+  --shadow-ds-xl: var(--ds-shadow-xl);
+
+  --font-ds-sans: var(--ds-font-sans);
+  --font-ds-display: var(--ds-font-display);
+  --font-ds-mono: var(--ds-font-mono);
+}
+
+/*
+ * Base — apply the canvas color + foreground to the document so themed
+ * pages don't need to repeat the wrapper styling. Themed scroll bars
+ * fall out of `color-scheme` set on `:root` / `[data-theme]`.
+ */
+@layer base {
+  html,
+  body {
+    background-color: var(--ds-color-background);
+    color: var(--ds-color-foreground);
+  }
+
+  /*
+   * View Transitions — used by `ThemeToggle` to stage the theme swap as
+   * a circular "ink-drop" reveal anchored on the toggle button. Disable
+   * the default crossfade on both snapshots so the only motion comes
+   * from the clip-path animation we drive in JS. The new snapshot sits
+   * on top of the old so the expanding circle reveals it.
+   */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+
+  ::view-transition-old(root) {
+    z-index: 0;
+  }
+
+  ::view-transition-new(root) {
+    z-index: 1;
+  }
+}
+
+/*
+ * Animation primitives consumed by `src/lib/animations.ts`.
+ * The reveal helpers wrap each word/line in a clipping container so we
+ * can translate the inner span into place.
+ */
+@layer components {
+  /*
+   * Reveal containers clip their inner span so animated words/lines can
+   * rise into view. `padding-bottom` + negative `margin-bottom` extends
+   * the clip below the baseline so descenders (p, g, y, j, q) aren't
+   * cut off, while keeping the laid-out height identical to the natural
+   * text — important under tight `leading-[1.05]` headlines.
+   */
+  .ds-reveal-word {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: bottom;
+    line-height: 1;
+    padding-bottom: 0.22em;
+    margin-bottom: -0.22em;
+  }
+
+  .ds-reveal-word__inner {
+    display: inline-block;
+    will-change: transform;
+  }
+
+  .ds-line-probe {
+    display: inline-block;
+  }
+
+  .ds-reveal-line {
+    display: block;
+    overflow: hidden;
+    padding-bottom: 0.18em;
+    margin-bottom: -0.18em;
+  }
+
+  .ds-reveal-line__inner {
+    display: block;
+    will-change: transform;
+  }
+
+  .ds-marquee-track {
+    display: flex;
+    width: max-content;
+    will-change: transform;
+  }
+
+  /*
+   * Theme-toggle icons — both rendered into the DOM and swapped via
+   * `[data-theme]` so the visual swap is owned by an attribute change
+   * rather than React state. This lets the View Transitions snapshot
+   * in `ThemeToggle` pick up the correct icon for each frame without
+   * needing a synchronous React commit.
+   */
+  .ds-theme-toggle-icons {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ds-theme-toggle-sun {
+    display: none;
+  }
+
+  .ds-theme-toggle-moon {
+    display: inline-block;
+  }
+
+  [data-theme='dark'] .ds-theme-toggle-sun {
+    display: inline-block;
+  }
+
+  [data-theme='dark'] .ds-theme-toggle-moon {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
