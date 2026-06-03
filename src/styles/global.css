@@ -56,6 +56,7 @@
   --ds-radius-lg: 0.75rem;
   --ds-radius-xl: 1rem;
   --ds-radius-2xl: 1.5rem;
+  --ds-radius-3xl: 4rem;
   --ds-radius-full: 9999px;
 
   /* Shadows */
@@ -70,6 +71,9 @@
   --ds-font-sans:
     ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --ds-font-display: var(--ds-font-sans);
+  --ds-font-editorial:
+    'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, 'Times New Roman',
+    serif;
   --ds-font-mono:
     ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
 }
@@ -116,6 +120,7 @@
   --radius-ds-lg: var(--ds-radius-lg);
   --radius-ds-xl: var(--ds-radius-xl);
   --radius-ds-2xl: var(--ds-radius-2xl);
+  --radius-ds-3xl: var(--ds-radius-3xl);
   --radius-ds-full: var(--ds-radius-full);
 
   --shadow-ds-xs: var(--ds-shadow-xs);
@@ -126,6 +131,7 @@
 
   --font-ds-sans: var(--ds-font-sans);
   --font-ds-display: var(--ds-font-display);
+  --font-ds-editorial: var(--ds-font-editorial);
   --font-ds-mono: var(--ds-font-mono);
 }
 
@@ -210,6 +216,31 @@
     display: flex;
     width: max-content;
     will-change: transform;
+  }
+
+  /*
+   * Hero starfield — placeholder background for the "Stay Human" hero until
+   * the real Figma starfield export is wired via the `starfieldSrc` prop.
+   * Layered radial-gradients scatter faint stars over the near-black canvas
+   * plus a soft vignette; kept subtle so the head video stays the hero. An
+   * inline `background-image` (real asset) overrides these gradients.
+   */
+  .ds-hero-starfield {
+    background-repeat: no-repeat;
+    background-image:
+      radial-gradient(1.5px 1.5px at 12% 22%, rgb(255 255 255 / 0.8), transparent 60%),
+      radial-gradient(1px 1px at 24% 68%, rgb(255 255 255 / 0.55), transparent 60%),
+      radial-gradient(1.5px 1.5px at 33% 38%, rgb(255 255 255 / 0.65), transparent 60%),
+      radial-gradient(1px 1px at 41% 84%, rgb(255 255 255 / 0.5), transparent 60%),
+      radial-gradient(2px 2px at 9% 52%, rgb(255 255 255 / 0.7), transparent 60%),
+      radial-gradient(1px 1px at 57% 18%, rgb(255 255 255 / 0.5), transparent 60%),
+      radial-gradient(1.5px 1.5px at 66% 72%, rgb(255 255 255 / 0.65), transparent 60%),
+      radial-gradient(1px 1px at 74% 34%, rgb(255 255 255 / 0.5), transparent 60%),
+      radial-gradient(2px 2px at 83% 60%, rgb(255 255 255 / 0.7), transparent 60%),
+      radial-gradient(1px 1px at 90% 26%, rgb(255 255 255 / 0.5), transparent 60%),
+      radial-gradient(1.5px 1.5px at 95% 80%, rgb(255 255 255 / 0.6), transparent 60%),
+      radial-gradient(1px 1px at 50% 92%, rgb(255 255 255 / 0.5), transparent 60%),
+      radial-gradient(120% 90% at 50% 50%, transparent 55%, rgb(0 0 0 / 0.65));
   }
 
   /*

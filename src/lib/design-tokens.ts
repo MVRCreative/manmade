@@ -90,6 +90,7 @@ export const radii = {
   lg: '0.75rem',
   xl: '1rem',
   '2xl': '1.5rem',
+  '3xl': '4rem',
   full: '9999px',
 } as const;
 
@@ -112,6 +113,8 @@ export const typography = {
     sans: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     display:
       'ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+    editorial:
+      '"Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif',
     mono: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
   },
   fontSize: {

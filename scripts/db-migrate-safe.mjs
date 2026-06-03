@@ -5,7 +5,7 @@
 
 import { spawn } from 'node:child_process';
 import process from 'node:process';
-import pg from 'pg';
+import { Client } from 'pg';
 
 const CONNECT_TIMEOUT_MS = 5000;
 
@@ -20,7 +20,7 @@ if (!url) {
   process.exit(0);
 }
 
-const client = new pg.Client({
+const client = new Client({
   connectionString: url,
   connectionTimeoutMillis: CONNECT_TIMEOUT_MS,
 });
@@ -28,8 +28,8 @@ const client = new pg.Client({
 try {
   await client.connect();
   await client.end();
-} catch (err) {
-  const reason = err instanceof Error ? err.message : String(err);
+} catch (error) {
+  const reason = error instanceof Error ? error.message : String(error);
   log(`Cannot reach database (${reason}) — skipping migrations.`);
   process.exit(0);
 }
