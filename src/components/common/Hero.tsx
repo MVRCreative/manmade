@@ -2,8 +2,8 @@
 
 /**
  * Hero — "Stay Human" opener. Words and head enter on load; the frame pins
- * in place while scroll only scrubs the head video. Then the page scrolls on
- * to the next section.
+ * in place while scroll only scrubs the head video on desktop. Touch devices
+ * play the banner inline without pin/scrub so the video and copy stay visible.
  */
 
 import { gsap } from 'gsap';
@@ -11,6 +11,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useEffect, useRef } from 'react';
 import { cn } from '@/lib/cn';
 import { durations, easings } from '@/lib/design-tokens';
+import { prefersReducedMotion, shouldUseHeroScrollScrub } from '@/lib/motion-prefs';
 
 export type HeroProps = {
   leadWord?: string;
@@ -27,6 +28,22 @@ const DEFAULT_SCRUB_END = '+=200%';
 
 const WORD_CLASS =
   'font-ds-display text-[clamp(2.75rem,9vw,82px)] leading-none font-normal tracking-[0.2em] text-white/70 uppercase select-none';
+
+const whenLayoutReady = (run: () => void): void => {
+  const start = () => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(run);
+    });
+  };
+  if (document.fonts?.ready) {
+    void (async () => {
+      await document.fonts.ready;
+      start();
+    })();
+  } else {
+    start();
+  }
+};
 
 export const Hero = (props: HeroProps) => {
   const rootRef = useRef<HTMLElement | null>(null);
@@ -47,16 +64,31 @@ export const Hero = (props: HeroProps) => {
     const trailEl = trailRef.current;
     const content = contentRef.current;
     let cleanup: (() => void) | undefined;
+    let cancelled = false;
 
     if (root && video && leadEl && trailEl && content) {
       video.pause();
       video.loop = false;
       video.currentTime = 0;
+      video.playsInline = true;
 
-      const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-      if (reduce) {
+      const reduce = prefersReducedMotion();
+      const useScrollScrub = shouldUseHeroScrollScrub();
+
+      const showFinalState = () => {
         gsap.set([leadEl, trailEl, video], { autoAlpha: 1, x: 0, scale: 1 });
-      } else {
+      };
+
+      const runMotion = () => {
+        if (cancelled) {
+          return;
+        }
+
+        if (reduce) {
+          showFinalState();
+          return;
+        }
+
         gsap.registerPlugin(ScrollTrigger);
 
         gsap.set(leadEl, { autoAlpha: 0, x: -28 });
@@ -64,48 +96,80 @@ export const Hero = (props: HeroProps) => {
         gsap.set(video, { autoAlpha: 0, scale: 0.96 });
 
         const loadEntrance = gsap
-          .timeline({ defaults: { ease: easings.decelerate, duration: durations.slow } })
+          .timeline({
+            defaults: { ease: easings.decelerate, duration: durations.slow },
+            onComplete: showFinalState,
+          })
           .to(video, { autoAlpha: 1, scale: 1 })
           .to(leadEl, { autoAlpha: 1, x: 0 }, '-=0.55')
           .to(trailEl, { autoAlpha: 1, x: 0 }, '<');
 
         const ctx = gsap.context(() => {
-          const bindScrollScrub = () => {
-            const { duration } = video;
-            if (!Number.isFinite(duration) || duration <= 0) {
-              return;
+          if (useScrollScrub) {
+            const bindScrollScrub = () => {
+              const { duration } = video;
+              if (!Number.isFinite(duration) || duration <= 0) {
+                return;
+              }
+
+              gsap.to(video, {
+                currentTime: duration,
+                ease: 'none',
+                scrollTrigger: {
+                  trigger: root,
+                  start: 'top top',
+                  end: scrubScrollEnd,
+                  pin: true,
+                  scrub: true,
+                  anticipatePin: 1,
+                  invalidateOnRefresh: true,
+                },
+              });
+            };
+
+            if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
+              bindScrollScrub();
+            } else {
+              video.addEventListener('loadedmetadata', bindScrollScrub, { once: true });
             }
-
-            gsap.to(video, {
-              currentTime: duration,
-              ease: 'none',
-              scrollTrigger: {
-                trigger: root,
-                start: 'top top',
-                end: scrubScrollEnd,
-                pin: true,
-                scrub: true,
-                anticipatePin: 1,
-                invalidateOnRefresh: true,
-              },
-            });
-          };
-
-          if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
-            bindScrollScrub();
           } else {
-            video.addEventListener('loadedmetadata', bindScrollScrub, { once: true });
+            video.loop = true;
+            video.muted = true;
+            void (async () => {
+              try {
+                await video.play();
+              } catch {
+                showFinalState();
+              }
+            })();
           }
         }, root);
 
+        const failSafe = window.setTimeout(showFinalState, 4000);
+
         cleanup = () => {
+          window.clearTimeout(failSafe);
           loadEntrance.kill();
           ctx.revert();
         };
+      };
+
+      const onVideoReady = () => {
+        whenLayoutReady(runMotion);
+      };
+
+      if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+        onVideoReady();
+      } else {
+        video.addEventListener('loadeddata', onVideoReady, { once: true });
+        video.addEventListener('error', onVideoReady, { once: true });
       }
+
+      video.load();
     }
 
     return () => {
+      cancelled = true;
       cleanup?.();
     };
   }, [videoSrc, scrubScrollEnd]);

@@ -13,6 +13,7 @@ import { Button } from '@/components/common/Button';
 import { RevealHeading } from '@/components/common/RevealHeading';
 import { RevealLines } from '@/components/common/RevealLines';
 import { cn } from '@/lib/cn';
+import { prefersReducedMotion } from '@/lib/motion-prefs';
 
 export type DoomedSectionProps = {
   illustrationSrc?: string;
@@ -40,7 +41,7 @@ export const DoomedSection = (props: DoomedSectionProps) => {
     let cleanup: (() => void) | undefined;
 
     if (section && riseTrack && motion) {
-      const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      const reduce = prefersReducedMotion();
       if (reduce) {
         gsap.set(motion, { y: 0, autoAlpha: 1 });
       } else {

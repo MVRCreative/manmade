@@ -36,9 +36,9 @@ export const FooterSection = (props: FooterSectionProps) => {
 
       <a
         href={shopHref}
-        className="inline-flex h-[55px] w-[306px] max-w-full items-center justify-center rounded-[55px] border-2 border-white bg-transparent px-6 text-center font-ds-sans text-sm leading-6 font-medium text-[#f5f5f5] transition-colors duration-200 hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-black focus-visible:outline-none"
+        className="relative z-[1] inline-flex h-[55px] w-[306px] max-w-full items-center justify-center rounded-[55px] border-2 border-white bg-transparent px-6 text-center font-ds-sans text-sm leading-6 font-medium text-[#f5f5f5] transition-colors duration-200 hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-black focus-visible:outline-none"
       >
-        Shop More Canon Books
+        <span className="relative z-[1]">Shop More Canon Books</span>
       </a>
     </footer>
   );

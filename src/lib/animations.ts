@@ -18,10 +18,14 @@
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { durations, easings } from '@/lib/design-tokens';
+import { prefersReducedMotion } from '@/lib/motion-prefs';
 
 type ScrollTriggerInstance = InstanceType<typeof ScrollTrigger>;
 export type AnimationTeardown = () => void;
 export type AnimationTrigger = 'load' | 'scroll';
+
+/** Play on enter only — avoids reversing to hidden when scrolling back up. */
+const SCROLL_TOGGLE_ONCE = 'play none none none';
 
 const noop: AnimationTeardown = () => {
   // Intentional no-op teardown used when the helper short-circuits.
@@ -37,16 +41,64 @@ const registerPlugins = (): void => {
   pluginsRegistered = true;
 };
 
-const prefersReducedMotion = (): boolean => {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-    return false;
-  }
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-};
-
 const killScrollTriggerFor = (tween: gsap.core.Tween): void => {
   const trigger = tween.scrollTrigger as ScrollTriggerInstance | undefined;
   trigger?.kill();
+};
+
+const scheduleScrollTriggerRefresh = (): void => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+  registerPlugins();
+  const refresh = () => {
+    ScrollTrigger.refresh();
+  };
+  requestAnimationFrame(() => {
+    requestAnimationFrame(refresh);
+  });
+  window.addEventListener('load', refresh, { once: true });
+};
+
+/**
+ * If the trigger is already in view after layout, complete the reveal immediately.
+ *
+ * @param tween GSAP tween bound to ScrollTrigger.
+ * @param triggerEl Element used as the ScrollTrigger trigger.
+ */
+const ensureScrollRevealPlayed = (tween: gsap.core.Tween, triggerEl: Element): void => {
+  scheduleScrollTriggerRefresh();
+  const run = () => {
+    const instance = tween.scrollTrigger as ScrollTriggerInstance | undefined;
+    if (instance && instance.progress > 0) {
+      tween.progress(1);
+      return;
+    }
+    if (ScrollTrigger.isInViewport(triggerEl)) {
+      tween.play();
+    }
+  };
+  requestAnimationFrame(run);
+};
+
+const whenLayoutReady = (run: () => void): void => {
+  if (typeof document === 'undefined') {
+    run();
+    return;
+  }
+  const start = () => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(run);
+    });
+  };
+  if (document.fonts?.ready) {
+    void (async () => {
+      await document.fonts.ready;
+      start();
+    })();
+  } else {
+    start();
+  }
 };
 
 export type FadeInOnScrollOptions = {
@@ -92,7 +144,7 @@ export const fadeInOnScroll = (
     delay = 0,
     ease = easings.emphasized,
     start = 'top 85%',
-    toggleActions = 'play none none reverse',
+    toggleActions = SCROLL_TOGGLE_ONCE,
   } = options;
 
   const tween = gsap.fromTo(
@@ -107,6 +159,8 @@ export const fadeInOnScroll = (
       scrollTrigger: { trigger: target, start, toggleActions },
     },
   );
+
+  ensureScrollRevealPlayed(tween, target);
 
   return () => {
     killScrollTriggerFor(tween);
@@ -167,7 +221,7 @@ export const staggerGrid = (
     stagger = 0.08,
     trigger = 'scroll',
     start = 'top 80%',
-    toggleActions = 'play none none reverse',
+    toggleActions = SCROLL_TOGGLE_ONCE,
   } = options;
 
   const tween = gsap.fromTo(
@@ -184,6 +238,10 @@ export const staggerGrid = (
         trigger === 'scroll' ? { trigger: container, start, toggleActions } : undefined,
     },
   );
+
+  if (trigger === 'scroll') {
+    ensureScrollRevealPlayed(tween, container);
+  }
 
   return () => {
     killScrollTriggerFor(tween);
@@ -287,14 +345,10 @@ const splitIntoWords = (target: HTMLElement): { restore: () => void; inners: HTM
  * @param options Reveal animation overrides.
  * @returns A teardown function that kills the tween and resets the heading.
  */
-export const revealHeading = (
-  target: Element | null,
-  options: RevealHeadingOptions = {},
+const runRevealHeading = (
+  target: HTMLElement,
+  options: RevealHeadingOptions,
 ): AnimationTeardown => {
-  if (!(target instanceof HTMLElement)) {
-    return noop;
-  }
-
   const { restore, inners } = splitIntoWords(target);
   if (inners.length === 0) {
     return restore;
@@ -327,15 +381,46 @@ export const revealHeading = (
       stagger,
       scrollTrigger:
         trigger === 'scroll'
-          ? { trigger: target, start, toggleActions: 'play none none none' }
+          ? { trigger: target, start, toggleActions: SCROLL_TOGGLE_ONCE }
           : undefined,
     },
   );
+
+  if (trigger === 'scroll') {
+    ensureScrollRevealPlayed(tween, target);
+  }
 
   return () => {
     killScrollTriggerFor(tween);
     tween.kill();
     restore();
+  };
+};
+
+export const revealHeading = (
+  target: Element | null,
+  options: RevealHeadingOptions = {},
+): AnimationTeardown => {
+  if (!(target instanceof HTMLElement)) {
+    return noop;
+  }
+
+  if (prefersReducedMotion()) {
+    return noop;
+  }
+
+  let innerTeardown: AnimationTeardown = noop;
+  let cancelled = false;
+
+  whenLayoutReady(() => {
+    if (!cancelled) {
+      innerTeardown = runRevealHeading(target, options);
+    }
+  });
+
+  return () => {
+    cancelled = true;
+    innerTeardown();
   };
 };
 
@@ -444,14 +529,7 @@ const splitIntoLines = (
  * @param options Reveal animation overrides.
  * @returns A teardown function that kills the tween and restores the text.
  */
-export const revealLines = (
-  target: Element | null,
-  options: RevealLinesOptions = {},
-): AnimationTeardown => {
-  if (!(target instanceof HTMLElement)) {
-    return noop;
-  }
-
+const runRevealLines = (target: HTMLElement, options: RevealLinesOptions): AnimationTeardown => {
   const split = splitIntoLines(target);
   if (!split) {
     return noop;
@@ -486,15 +564,46 @@ export const revealLines = (
       stagger,
       scrollTrigger:
         trigger === 'scroll'
-          ? { trigger: target, start, toggleActions: 'play none none none' }
+          ? { trigger: target, start, toggleActions: SCROLL_TOGGLE_ONCE }
           : undefined,
     },
   );
+
+  if (trigger === 'scroll') {
+    ensureScrollRevealPlayed(tween, target);
+  }
 
   return () => {
     killScrollTriggerFor(tween);
     tween.kill();
     split.restore();
+  };
+};
+
+export const revealLines = (
+  target: Element | null,
+  options: RevealLinesOptions = {},
+): AnimationTeardown => {
+  if (!(target instanceof HTMLElement)) {
+    return noop;
+  }
+
+  if (prefersReducedMotion()) {
+    return noop;
+  }
+
+  let innerTeardown: AnimationTeardown = noop;
+  let cancelled = false;
+
+  whenLayoutReady(() => {
+    if (!cancelled) {
+      innerTeardown = runRevealLines(target, options);
+    }
+  });
+
+  return () => {
+    cancelled = true;
+    innerTeardown();
   };
 };
 

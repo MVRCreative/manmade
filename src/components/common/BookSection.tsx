@@ -39,7 +39,7 @@ const DEFAULT_LOGOS: readonly BookSectionLogo[] = [
     height: 28,
   },
   {
-    src: '/assets/images/book-section/logo-first-things.png',
+    src: '/assets/images/book-section/logo-first-things.svg',
     alt: 'First Things',
     width: 150,
     height: 27,
@@ -74,6 +74,7 @@ export const BookSection = (props: BookSectionProps) => {
           stagger={0.1}
           y={20}
           trigger="scroll"
+          start="top 92%"
         >
           {logos.map((logo) => (
             <img
@@ -83,7 +84,7 @@ export const BookSection = (props: BookSectionProps) => {
               width={logo.width}
               height={logo.height}
               className="h-auto max-h-11 w-auto max-w-[160px] object-contain"
-              loading="lazy"
+              loading="eager"
               decoding="async"
             />
           ))}

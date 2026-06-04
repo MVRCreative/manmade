@@ -6,14 +6,15 @@
  * sync with the smoothed scroll.
  *
  * Mount once near the root of any page that wants smooth scrolling.
- * Honors `prefers-reduced-motion` by skipping Lenis entirely so users
- * who opt out get native scrolling.
+ * Honors `prefers-reduced-motion` and skips Lenis on touch devices where
+ * it fights native scrolling and ScrollTrigger.
  */
 
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
 import { useEffect } from 'react';
+import { shouldEnableSmoothScroll } from '@/lib/motion-prefs';
 
 export type SmoothScrollProps = {
   /** Scroll feel (Lenis `lerp`). Lower = smoother, higher = snappier. */
@@ -23,17 +24,10 @@ export type SmoothScrollProps = {
   children?: React.ReactNode;
 };
 
-const prefersReducedMotion = (): boolean => {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-    return false;
-  }
-  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-};
-
 const setupSmoothScroll = (lerp: number, wheelMultiplier: number): (() => void) => {
-  if (prefersReducedMotion()) {
+  if (!shouldEnableSmoothScroll()) {
     return () => {
-      // No teardown required when smooth scrolling was skipped.
+      // Native scroll — no teardown required.
     };
   }
 

@@ -72,7 +72,7 @@ export const Button = (props: ButtonProps) => {
   const content = (
     <>
       {leftIcon ? <span aria-hidden="true">{leftIcon}</span> : null}
-      <span>{children}</span>
+      <span className="relative z-[1]">{children}</span>
       {rightIcon ? <span aria-hidden="true">{rightIcon}</span> : null}
     </>
   );

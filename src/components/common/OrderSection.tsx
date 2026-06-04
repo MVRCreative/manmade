@@ -140,8 +140,8 @@ export const OrderSection = (props: OrderSectionProps) => {
               href={preorderHref}
               className="inline-flex h-[55px] w-full max-w-[320px] items-center justify-center rounded-[55px] bg-[#eb7031] px-6 text-center font-ds-sans text-sm font-medium text-white transition-[filter] duration-200 hover:brightness-105 focus-visible:ring-2 focus-visible:ring-[#eb7031]/50 focus-visible:ring-offset-2 focus-visible:outline-none"
             >
-              <span className="font-bold">Preorder now</span>
-              <span>{` — Ships ${shipDate}`}</span>
+              <span className="relative z-[1] font-bold">Preorder now</span>
+              <span className="relative z-[1]">{` — Ships ${shipDate}`}</span>
             </a>
 
             <OrderDescription />
