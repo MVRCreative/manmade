@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { SmoothScroll } from '@/components/common';
+import { fontDsDisplay } from '@/lib/fonts';
 import { THEME_INIT_SCRIPT } from '@/lib/theme';
 import '@/styles/global.css';
 
@@ -35,7 +36,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout(props: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={fontDsDisplay.variable} suppressHydrationWarning>
       <head>
         {/* Resolve theme before first paint so users never see the wrong
             background flash on hard refresh. See `src/lib/theme.ts`. */}

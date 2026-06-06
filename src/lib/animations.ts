@@ -60,25 +60,32 @@ const scheduleScrollTriggerRefresh = (): void => {
   window.addEventListener('load', refresh, { once: true });
 };
 
+/** Recomputes ScrollTrigger positions after layout changes (e.g. hero pin spacers). */
+export const refreshScrollTriggers = (): void => {
+  scheduleScrollTriggerRefresh();
+};
+
 /**
- * If the trigger is already in view after layout, complete the reveal immediately.
+ * Snaps to the revealed state when scroll has already passed the trigger start.
+ * Enter playback is left to ScrollTrigger `toggleActions`.
  *
  * @param tween GSAP tween bound to ScrollTrigger.
- * @param triggerEl Element used as the ScrollTrigger trigger.
+ * @returns Teardown for the refresh listener.
  */
-const ensureScrollRevealPlayed = (tween: gsap.core.Tween, triggerEl: Element): void => {
-  scheduleScrollTriggerRefresh();
-  const run = () => {
+const attachScrollRevealSync = (tween: gsap.core.Tween): AnimationTeardown => {
+  const syncIfScrollPassed = () => {
     const instance = tween.scrollTrigger as ScrollTriggerInstance | undefined;
     if (instance && instance.progress > 0) {
       tween.progress(1);
-      return;
-    }
-    if (ScrollTrigger.isInViewport(triggerEl)) {
-      tween.play();
     }
   };
-  requestAnimationFrame(run);
+
+  requestAnimationFrame(syncIfScrollPassed);
+  ScrollTrigger.addEventListener('refresh', syncIfScrollPassed);
+
+  return () => {
+    ScrollTrigger.removeEventListener('refresh', syncIfScrollPassed);
+  };
 };
 
 const whenLayoutReady = (run: () => void): void => {
@@ -99,6 +106,34 @@ const whenLayoutReady = (run: () => void): void => {
   } else {
     start();
   }
+};
+
+/**
+ * Waits for fonts and document load before binding scroll reveals so hero pin
+ * spacers are included in trigger positions.
+ *
+ * @param run Callback that binds the scroll-triggered tween.
+ */
+const whenScrollRevealReady = (run: () => void): void => {
+  if (typeof document === 'undefined') {
+    run();
+    return;
+  }
+
+  const start = () => {
+    scheduleScrollTriggerRefresh();
+    requestAnimationFrame(() => {
+      requestAnimationFrame(run);
+    });
+  };
+
+  whenLayoutReady(() => {
+    if (document.readyState === 'complete') {
+      start();
+    } else {
+      window.addEventListener('load', start, { once: true });
+    }
+  });
 };
 
 export type FadeInOnScrollOptions = {
@@ -160,9 +195,10 @@ export const fadeInOnScroll = (
     },
   );
 
-  ensureScrollRevealPlayed(tween, target);
+  const revealCleanup = attachScrollRevealSync(tween);
 
   return () => {
+    revealCleanup();
     killScrollTriggerFor(tween);
     tween.kill();
   };
@@ -239,11 +275,10 @@ export const staggerGrid = (
     },
   );
 
-  if (trigger === 'scroll') {
-    ensureScrollRevealPlayed(tween, container);
-  }
+  const revealCleanup = trigger === 'scroll' ? attachScrollRevealSync(tween) : noop;
 
   return () => {
+    revealCleanup();
     killScrollTriggerFor(tween);
     tween.kill();
   };
@@ -381,16 +416,20 @@ const runRevealHeading = (
       stagger,
       scrollTrigger:
         trigger === 'scroll'
-          ? { trigger: target, start, toggleActions: SCROLL_TOGGLE_ONCE }
+          ? {
+              trigger: target,
+              start,
+              toggleActions: SCROLL_TOGGLE_ONCE,
+              invalidateOnRefresh: true,
+            }
           : undefined,
     },
   );
 
-  if (trigger === 'scroll') {
-    ensureScrollRevealPlayed(tween, target);
-  }
+  const revealCleanup = trigger === 'scroll' ? attachScrollRevealSync(tween) : noop;
 
   return () => {
+    revealCleanup();
     killScrollTriggerFor(tween);
     tween.kill();
     restore();
@@ -411,8 +450,10 @@ export const revealHeading = (
 
   let innerTeardown: AnimationTeardown = noop;
   let cancelled = false;
+  const schedule =
+    (options.trigger ?? 'load') === 'scroll' ? whenScrollRevealReady : whenLayoutReady;
 
-  whenLayoutReady(() => {
+  schedule(() => {
     if (!cancelled) {
       innerTeardown = runRevealHeading(target, options);
     }
@@ -564,16 +605,20 @@ const runRevealLines = (target: HTMLElement, options: RevealLinesOptions): Anima
       stagger,
       scrollTrigger:
         trigger === 'scroll'
-          ? { trigger: target, start, toggleActions: SCROLL_TOGGLE_ONCE }
+          ? {
+              trigger: target,
+              start,
+              toggleActions: SCROLL_TOGGLE_ONCE,
+              invalidateOnRefresh: true,
+            }
           : undefined,
     },
   );
 
-  if (trigger === 'scroll') {
-    ensureScrollRevealPlayed(tween, target);
-  }
+  const revealCleanup = trigger === 'scroll' ? attachScrollRevealSync(tween) : noop;
 
   return () => {
+    revealCleanup();
     killScrollTriggerFor(tween);
     tween.kill();
     split.restore();
@@ -594,8 +639,10 @@ export const revealLines = (
 
   let innerTeardown: AnimationTeardown = noop;
   let cancelled = false;
+  const schedule =
+    (options.trigger ?? 'load') === 'scroll' ? whenScrollRevealReady : whenLayoutReady;
 
-  whenLayoutReady(() => {
+  schedule(() => {
     if (!cancelled) {
       innerTeardown = runRevealLines(target, options);
     }

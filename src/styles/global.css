@@ -70,7 +70,7 @@
   /* Typography */
   --ds-font-sans:
     ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --ds-font-display: var(--ds-font-sans);
+  --ds-font-display: var(--font-ds-display-face), var(--ds-font-sans);
   --ds-font-editorial:
     'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, 'Times New Roman',
     serif;
